@@ -1,0 +1,409 @@
+<div class="container audit-logs-container">
+  <h3>🔍 Audit Logs</h3>
+  <p>View all your activity and security events</p>
+
+  <!-- Filters -->
+  <div class="filter-section card">
+    <h4>Filters</h4>
+    <form method="get" class="filter-form" action="{% url 'dashboard' %}">
+      <input type="hidden" name="tab" value="audit">
+      <div class="form-group-inline">
+        <select name="action" class="form-control" onchange="this.form.submit()">
+          <option value="">All Actions</option>
+          {% for action_code, action_name in all_actions %}
+            <option value="{{ action_code }}" {% if selected_action == action_code %}selected{% endif %}>
+              {{ action_name }}
+            </option>
+          {% endfor %}
+        </select>
+
+        <select name="status" class="form-control" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          {% for status_code, status_name in all_statuses %}
+            <option value="{{ status_code }}" {% if selected_status == status_code %}selected{% endif %}>
+              {{ status_name }}
+            </option>
+          {% endfor %}
+        </select>
+
+        {% if selected_action or selected_status %}
+          <a href="{% url 'dashboard' %}?tab=audit" class="btn secondary-small">Clear Filters</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Audit Logs Table -->
+  {% if page_obj %}
+    <div class="logs-table-container card">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Action</th>
+            <th>Resource</th>
+            <th>Status</th>
+            <th>IP Address</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in page_obj %}
+            <tr class="log-row log-status-{{ log.status|lower }}">
+              <td class="timestamp">
+                <span title="{{ log.timestamp }}">{{ log.timestamp|date:"M d, Y H:i:s" }}</span>
+              </td>
+              <td class="action">
+                <span class="badge badge-{{ log.action|lower }}">{{ log.get_action_display }}</span>
+              </td>
+              <td class="resource">
+                {% if log.resource_name %}
+                  <strong>{{ log.resource_name }}</strong>
+                  <br><small>{{ log.get_resource_type_display }}</small>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="status">
+                <span class="status-badge status-{{ log.status|lower }}">{{ log.get_status_display }}</span>
+              </td>
+              <td class="ip-address">
+                {% if log.ip_address %}
+                  <code>{{ log.ip_address }}</code>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="details-btn">
+                {% if log.details %}
+                  <button class="btn-details" onclick="toggleDetails(this, {{ forloop.counter }})">View</button>
+                  <div class="details-content hidden" id="details-{{ forloop.counter }}">
+                    <pre>{{ log.details|safe }}</pre>
+                  </div>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+      <div class="pagination-container">
+        <nav class="pagination">
+          {% if page_obj.has_previous %}
+            <a href="{% url 'dashboard' %}?tab=audit&page=1{% if selected_action %}&action={{ selected_action }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">« First</a>
+            <a href="{% url 'dashboard' %}?tab=audit&page={{ page_obj.previous_page_number }}{% if selected_action %}&action={{ selected_action }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">‹ Previous</a>
+          {% endif %}
+
+          <span class="page-info">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          </span>
+
+          {% if page_obj.has_next %}
+            <a href="{% url 'dashboard' %}?tab=audit&page={{ page_obj.next_page_number }}{% if selected_action %}&action={{ selected_action }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Next ›</a>
+            <a href="{% url 'dashboard' %}?tab=audit&page={{ page_obj.paginator.num_pages }}{% if selected_action %}&action={{ selected_action }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Last »</a>
+          {% endif %}
+        </nav>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="empty-state card">
+      <p>No audit logs found.</p>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+.audit-logs-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+}
+
+.filter-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.form-group-inline {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.form-control {
+  padding: 8px 12px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 200px;
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+.logs-table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.logs-table thead {
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  border-bottom: 2px solid #1d4ed8;
+}
+
+.logs-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: white;
+}
+
+.logs-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ffffff10;
+  color: #e5e7eb;
+}
+
+.logs-table tbody tr:hover {
+  background-color: #1e293b;
+}
+
+.log-row.log-status-success {
+  background-color: #064e3b33;
+}
+
+.log-row.log-status-failure {
+  background-color: #7c2d1233;
+}
+
+.log-row.log-status-warning {
+  background-color: #92400e33;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-file_upload {
+  background-color: #1e40af33;
+  color: #93c5fd;
+}
+
+.badge-file_download {
+  background-color: #064e3b33;
+  color: #a7f3d0;
+}
+
+.badge-password_view {
+  background-color: #92400e33;
+  color: #fbbf24;
+}
+
+.badge-login {
+  background-color: #1e40af33;
+  color: #93c5fd;
+}
+
+.badge-mfa_verified {
+  background-color: #064e3b33;
+  color: #a7f3d0;
+}
+
+.badge-mfa_failed {
+  background-color: #7c2d1233;
+  color: #fca5a5;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.status-success {
+  background-color: #064e3b;
+  color: #a7f3d0;
+}
+
+.status-failure {
+  background-color: #7c2d12;
+  color: #fca5a5;
+}
+
+.status-warning {
+  background-color: #92400e;
+  color: #fbbf24;
+}
+
+.timestamp {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.resource {
+  max-width: 200px;
+}
+
+.resource strong {
+  word-break: break-word;
+  color: #ffffff;
+}
+
+.resource small {
+  display: block;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.ip-address code {
+  background-color: #0f172a;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #60a5fa;
+}
+
+.btn-details {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-details:hover {
+  background-color: #2563eb;
+}
+
+.details-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #121a2e;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 70vh;
+  overflow: auto;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  color: #e5e7eb;
+}
+
+.details-content.hidden {
+  display: none;
+}
+
+.details-content pre {
+  background-color: #0f172a;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #60a5fa;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.pagination {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination a {
+  padding: 8px 12px;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #60a5fa;
+  font-size: 14px;
+  background-color: transparent;
+}
+
+.pagination a:hover {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.page-info {
+  padding: 0 10px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+}
+
+.text-muted {
+  color: #94a3b8;
+}
+
+.btn-secondary-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.card {
+  border: 1px solid #ffffff1a;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background-color: #121a2e;
+  color: #e5e7eb;
+}
+</style>
+
+<script>
+function toggleDetails(button, id) {
+  const details = document.getElementById('details-' + id);
+  if (details.classList.contains('hidden')) {
+    details.classList.remove('hidden');
+    button.textContent = 'Hide';
+  } else {
+    details.classList.add('hidden');
+    button.textContent = 'View';
+  }
+}
+</script>

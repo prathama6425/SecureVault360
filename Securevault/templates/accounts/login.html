@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Login</h2>
+<form method="post" class="form-card">
+  {% csrf_token %}
+  <label>Username <input name="username" required></label>
+  <label>Password <input name="password" type="password" required></label>
+  <button class="btn primary" type="submit">Send OTP</button>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+

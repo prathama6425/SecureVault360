@@ -1,0 +1,273 @@
+<h3>Key Management</h3>
+<p class="page-subtitle" style="margin-bottom: 24px;">View and manage encryption keys for your uploaded files.</p>
+
+<div class="key-management-grid">
+  <div class="card-animated info-card">
+    <div class="card-headline">🔑 Encryption Keys</div>
+    <p class="card-sub">Your files are encrypted using unique AES-256 keys. Keys are securely managed and never stored in plain text.</p>
+
+    <div class="key-stats">
+      <div class="stat-item">
+        <div class="stat-number">{{ encrypted_files_count|default:0 }}</div>
+        <div class="stat-label">Encrypted Files</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ total_files_count|default:0 }}</div>
+        <div class="stat-label">Total Files</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ key_rotations|default:0 }}</div>
+        <div class="stat-label">Key Rotations</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-animated key-list-card">
+    <div class="card-headline">File Encryption Keys</div>
+    <p class="card-sub">Keys are derived from your master encryption key and file-specific data.</p>
+
+    {% if encrypted_files %}
+      <div class="key-list">
+        {% for file in encrypted_files %}
+          <div class="key-item">
+            <div class="key-info">
+              <div class="key-title">{{ file.title }}</div>
+              <div class="key-filename">{{ file.filename }}</div>
+              <div class="key-meta">
+                <span class="key-date">{{ file.uploaded_at|date:"M d, Y H:i" }}</span>
+                <span class="key-hash">{{ file.sha256|truncatechars:16 }}</span>
+              </div>
+            </div>
+            <div class="key-actions">
+              <button class="btn secondary small" onclick="showKeyInfo('{{ file.id }}')" title="View key information">
+                <span>ℹ️</span> Info
+              </button>
+              <button class="btn warning small" onclick="rotateKey('{{ file.id }}')" title="Rotate encryption key">
+                <span>🔄</span> Rotate
+              </button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🔐</div>
+        <h4>No Encrypted Files</h4>
+        <p>You haven't uploaded any encrypted files yet. Upload files with encryption enabled to see your keys here.</p>
+        <a href="#" onclick="showTab('encrypt'); return false;" class="btn primary">Upload Encrypted File</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Key Info Modal (hidden by default) -->
+<div id="keyInfoModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Encryption Key Information</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="keyInfoContent">
+      <!-- Content will be populated by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<style>
+.key-management-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+}
+
+.key-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.key-list-card {
+  min-height: 400px;
+}
+
+.key-list {
+  margin-top: 16px;
+}
+
+.key-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.key-info {
+  flex: 1;
+}
+
+.key-title {
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-bottom: 4px;
+}
+
+.key-filename {
+  color: #94a3b8;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.key-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.key-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn.warning {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.btn.warning:hover {
+  background-color: #d97706;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #94a3b8;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state h4 {
+  color: #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #1e293b;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #e5e7eb;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+}
+</style>
+
+<script>
+function showKeyInfo(fileId) {
+  // This would typically make an AJAX call to get key information
+  const modal = document.getElementById('keyInfoModal');
+  const content = document.getElementById('keyInfoContent');
+
+  content.innerHTML = `
+    <div style="text-align: center; color: #94a3b8;">
+      <div style="font-size: 48px; margin-bottom: 16px;">🔐</div>
+      <h4 style="color: #e5e7eb; margin-bottom: 16px;">Key Information</h4>
+      <p>File ID: ${fileId}</p>
+      <p>Encryption: AES-256 (Fernet)</p>
+      <p>Key Status: Active</p>
+      <p style="margin-top: 20px; font-size: 12px; color: #64748b;">
+        For security reasons, the actual encryption key is never displayed.<br>
+        Keys are derived from your master encryption key and file-specific data.
+      </p>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function rotateKey(fileId) {
+  if (confirm('Are you sure you want to rotate the encryption key for this file? This action cannot be undone.')) {
+    // This would make an AJAX call to rotate the key
+    alert('Key rotation functionality would be implemented here. This requires re-encrypting the file with a new key.');
+  }
+}
+
+function closeModal() {
+  document.getElementById('keyInfoModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('keyInfoModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeModal();
+  }
+});
+</script>

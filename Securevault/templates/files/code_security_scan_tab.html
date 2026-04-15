@@ -1,0 +1,370 @@
+<h3>🔍 Code Security Scanner</h3>
+<p class="page-subtitle" style="margin-bottom: 24px;">Upload and scan code files for insecure coding practices and security vulnerabilities.</p>
+
+{% if messages %}
+  <div class="messages" style="margin-bottom: 20px;">
+    {% for message in messages %}
+      <div class="message {% if message.tags %}{{ message.tags }}{% endif %}" style="padding: 10px; border-radius: 4px; margin-bottom: 10px;
+        {% if message.tags == 'error' %}background-color: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;{% endif %}
+        {% if message.tags == 'success' %}background-color: #d1fae5; color: #059669; border: 1px solid #a7f3d0;{% endif %}
+        {% if message.tags == 'warning' %}background-color: #fef3c7; color: #d97706; border: 1px solid #fcd34d;{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if scan_results %}
+  <!-- Scan Results -->
+  <div class="scan-results-container" style="margin-bottom: 24px;">
+    <div class="card-animated result-summary" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 20px; color: white;">
+      <h4 style="margin-top: 0; color: #ffffff;">📊 Scan Summary</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+        <div style="text-align: center;">
+          <div style="font-size: 24px; font-weight: bold; color: #60a5fa;">{{ scan_results.filename }}</div>
+          <div style="font-size: 12px; color: #e0e7ff;">File Name</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 24px; font-weight: bold; color: #60a5fa;">{{ scan_results.total_lines }}</div>
+          <div style="font-size: 12px; color: #e0e7ff;">Total Lines</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 24px; font-weight: bold; {% if scan_results.issues_found > 0 %}color: #fca5a5;{% else %}color: #a7f3d0;{% endif %}">{{ scan_results.issues_found }}</div>
+          <div style="font-size: 12px; color: #e0e7ff;">Issues Found</div>
+        </div>
+      </div>
+    </div>
+
+    {% if scan_results.issues %}
+      <div class="issues-list card" style="border: 1px solid #ffffff1a; border-radius: 8px; padding: 20px; background-color: #121a2e; color: #e5e7eb;">
+        <h4 style="margin-top: 0; color: #ffffff;">🚨 Security Issues Detected</h4>
+
+        {% for issue in scan_results.issues %}
+          <div class="issue-item" style="border: 1px solid #334155; border-radius: 6px; padding: 15px; margin-bottom: 15px; background-color: #0f172a;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+              <div>
+                <span class="issue-type" style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; background-color: {% if issue.severity == 'HIGH' %}#7c2d12; color: #fca5a5;{% elif issue.severity == 'MEDIUM' %}#92400e; color: #fbbf24;{% else %}#064e3b; color: #a7f3d0;{% endif %}">
+                  {{ issue.severity }}
+                </span>
+                <span class="issue-category" style="margin-left: 10px; font-weight: 600; color: #60a5fa;">{{ issue.type }}</span>
+              </div>
+              <span class="line-number" style="font-size: 12px; color: #94a3b8;">Line {{ issue.line_number }}</span>
+            </div>
+            <p style="margin: 10px 0; color: #e5e7eb;">{{ issue.description }}</p>
+            {% if issue.code_snippet %}
+              <div class="code-snippet" style="background-color: #0f172a; border: 1px solid #334155; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 13px; color: #60a5fa; overflow-x: auto;">
+                {{ issue.code_snippet }}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="no-issues card" style="border: 1px solid #10b981; border-radius: 8px; padding: 20px; background-color: #064e3b33; color: #a7f3d0; text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+        <h4 style="margin: 0 0 10px 0; color: #a7f3d0;">No Security Issues Found</h4>
+        <p style="margin: 0; color: #6ee7b7;">Your code appears to follow secure coding practices!</p>
+      </div>
+    {% endif %}
+
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="#" onclick="showTab('scan'); return false;" class="btn primary">Scan Another File</a>
+    </div>
+  </div>
+{% else %}
+  <!-- Upload Form -->
+  <div class="layout-grid">
+    <form method="post" enctype="multipart/form-data" class="card-animated form-card modern" action="{% url 'code_security_scan' %}">
+      {% csrf_token %}
+      <div class="field-group">
+        <label for="code_file">Code File</label>
+        <div class="input-shell file">
+          <input type="file" id="code_file" name="code_file" required accept=".py,.js,.java,.c,.cpp,.h,.php,.rb,.go,.rs">
+        </div>
+        <span class="helper">Supported formats: Python (.py), JavaScript (.js), Java (.java), C/C++ (.c/.cpp/.h), PHP (.php), Ruby (.rb), Go (.go), Rust (.rs)</span>
+        <span class="helper">Maximum file size: 1MB</span>
+      </div>
+
+      <div class="action-row">
+        <button class="btn primary glow compact" type="submit">🔍 Scan for Security Issues</button>
+      </div>
+    </form>
+
+    <aside class="card-animated info-card">
+      <div class="card-headline">🛡️ Security Checks Performed</div>
+      <p class="card-sub">Our scanner analyzes your code for common security vulnerabilities:</p>
+      <div class="timeline">
+        <div class="timeline-step">
+          <div class="timeline-bullet">1</div>
+          <div>
+            <div class="timeline-title">Hardcoded Secrets</div>
+            <p>Detects passwords, API keys, and tokens stored in code</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">2</div>
+          <div>
+            <div class="timeline-title">Weak Cryptography</div>
+            <p>Identifies use of deprecated algorithms like MD5, SHA1, DES</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">3</div>
+          <div>
+            <div class="timeline-title">Dangerous Functions</div>
+            <p>Flags eval(), exec(), os.system(), and unsafe subprocess calls</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">4</div>
+          <div>
+            <div class="timeline-title">Injection Vulnerabilities</div>
+            <p>Detects SQL injection, XSS, and command injection risks</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">5</div>
+          <div>
+            <div class="timeline-title">Input Validation</div>
+            <p>Checks for missing validation on user inputs</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">6</div>
+          <div>
+            <div class="timeline-title">Vulnerable Packages</div>
+            <p>Identifies imports of known vulnerable libraries</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">7</div>
+          <div>
+            <div class="timeline-title">Hardcoded URLs</div>
+            <p>Finds embedded URLs that may leak infrastructure details</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">8</div>
+          <div>
+            <div class="timeline-title">Output Encoding</div>
+            <p>Checks for proper encoding before rendering user data</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">9</div>
+          <div>
+            <div class="timeline-title">Debug Code</div>
+            <p>Detects print statements and debug code left in production</p>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-bullet">10</div>
+          <div>
+            <div class="timeline-title">File Permissions</div>
+            <p>Identifies insecure file and directory permission settings</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+{% endif %}
+
+<style>
+.layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card-animated {
+  border: 1px solid #ffffff1a;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #121a2e;
+  color: #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.card-animated:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.form-card {
+  max-width: 500px;
+}
+
+.field-group {
+  margin-bottom: 20px;
+}
+
+.field-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.input-shell {
+  position: relative;
+}
+
+.input-shell input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background-color: #0f172a;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+.input-shell input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.input-shell.file input[type="file"] {
+  padding: 8px;
+}
+
+.helper {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.action-row {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.btn.primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn.primary:hover {
+  background-color: #2563eb;
+}
+
+.btn.secondary-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+.btn.secondary-small:hover {
+  background-color: #4b5563;
+}
+
+.info-card {
+  max-width: 500px;
+}
+
+.card-headline {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #e5e7eb;
+}
+
+.card-sub {
+  color: #94a3b8;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timeline-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.timeline-bullet {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.timeline-title {
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-bottom: 4px;
+}
+
+.timeline p {
+  margin: 0;
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.scan-results-container {
+  max-width: 100%;
+}
+
+.result-summary {
+  color: white;
+}
+
+.issues-list {
+  margin-top: 20px;
+}
+
+.issue-item {
+  border-left: 4px solid #3b82f6;
+}
+
+.issue-item:hover {
+  border-left-color: #60a5fa;
+}
+
+.code-snippet {
+  margin-top: 10px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.no-issues {
+  border-color: #10b981 !important;
+  background-color: #064e3b33 !important;
+}
+</style>

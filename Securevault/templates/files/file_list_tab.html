@@ -1,0 +1,189 @@
+<div class="row-between" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <h3>Your Files</h3>
+</div>
+
+{% if messages %}
+  <div style="margin-bottom: 20px;">
+    {% for message in messages %}
+      <div style="padding: 12px 16px; border-radius: 6px; margin-bottom: 10px; {% if message.tags == 'success' %}background-color: #064e3b; color: #a7f3d0; border: 1px solid #10b981;{% elif message.tags == 'error' %}background-color: #7c2d12; color: #fca5a5; border: 1px solid #dc2626;{% else %}background-color: #1e40af; color: #93c5fd; border: 1px solid #3b82f6;{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- Upload Form -->
+<div class="upload-section" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+  <h4 style="color: #ffffff; margin-top: 0; margin-bottom: 15px;">📤 Upload New File</h4>
+  <form id="upload-form" enctype="multipart/form-data" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 15px; align-items: end;">
+    {% csrf_token %}
+    <div class="field-group" style="margin-bottom: 0;">
+      <label for="upload_title" style="color: #e0e7ff; font-weight: 600; display: block; margin-bottom: 5px;">File Title</label>
+      <input type="text" id="upload_title" name="title" placeholder="Enter file title..." required style="width: 100%; padding: 10px; border: 1px solid #334155; border-radius: 6px; background-color: #0f172a; color: #e5e7eb; font-size: 14px;">
+    </div>
+    <div class="field-group" style="margin-bottom: 0;">
+      <label for="upload_file" style="color: #e0e7ff; font-weight: 600; display: block; margin-bottom: 5px;">Select File</label>
+      <input type="file" id="upload_file" name="file" required style="width: 100%; padding: 8px; border: 1px solid #334155; border-radius: 6px; background-color: #0f172a; color: #e5e7eb; font-size: 14px;">
+    </div>
+    <button class="btn primary" type="submit" id="upload_btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">Upload</button>
+  </form>
+  <div style="margin-top: 10px; font-size: 12px; color: #94a3b8;">
+    <strong>Max file size:</strong> 50MB
+  </div>
+</div>
+
+<div style="overflow-x: auto;">
+  <table class="table" style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background: linear-gradient(180deg, #3b82f6, #2563eb); border-bottom: 2px solid #1d4ed8;">
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Title</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">File Name</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Size</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Uploaded</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for file in files %}
+      <tr style="border-bottom: 1px solid #ffffff15; background-color: #121a2e;">
+        <td style="padding: 12px; color: #e5e7eb;">{{ file.title }}</td>
+        <td style="padding: 12px; word-break: break-word; color: #e5e7eb;">{{ file.filename }}</td>
+        <td style="padding: 12px; color: #94a3b8; font-size: 13px;">
+          {% if file.file_size %}
+            {{ file.file_size|filesizeformat }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td style="padding: 12px; font-size: 13px; color: #94a3b8;">{{ file.uploaded_at|date:"M d, Y H:i" }}</td>
+        <td style="padding: 12px;">
+          <a class="btn" href="{% url 'download_file' file.pk %}" style="background-color: #007bff; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 12px;">Download</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="5" style="padding: 20px; text-align: center; color: #94a3b8; background-color: #121a2e;">
+          <p>No files yet. <a href="#" onclick="showTab('files'); return false;" style="color: #60a5fa; font-weight: 600;">Upload your first file above</a></p>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<style>
+.btn {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn.primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn.primary:hover {
+  background-color: #0056b3;
+}
+
+.btn.secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn.secondary:hover {
+  background-color: #5a6268;
+}
+
+.badge {
+  display: inline-block;
+  font-weight: 600;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.upload-loading {
+  display: none;
+  text-align: center;
+  padding: 10px;
+  color: #60a5fa;
+}
+
+.upload-loading.active {
+  display: block;
+}
+</style>
+
+<script>
+document.getElementById('upload-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const form = this;
+  const uploadBtn = document.getElementById('upload_btn');
+  const formData = new FormData(form);
+  
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Uploading...';
+  
+  fetch('{% url "upload_simple" %}', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Upload';
+    
+    if (data.success) {
+      form.reset();
+      document.getElementById('upload_title').value = '';
+      document.getElementById('upload_file').value = '';
+      
+      const successMsg = document.createElement('div');
+      successMsg.style.cssText = 'padding: 12px 16px; border-radius: 6px; background-color: #064e3b; color: #a7f3d0; border: 1px solid #10b981; margin-bottom: 10px;';
+      successMsg.textContent = data.message;
+      
+      const messagesDiv = document.querySelector('[style*="margin-bottom: 20px"]');
+      if (messagesDiv) {
+        messagesDiv.parentNode.insertBefore(successMsg, messagesDiv);
+      } else {
+        form.parentNode.insertBefore(successMsg, form);
+      }
+      
+      setTimeout(() => {
+        successMsg.remove();
+        location.reload();
+      }, 2000);
+    } else {
+      const errorMsg = document.createElement('div');
+      errorMsg.style.cssText = 'padding: 12px 16px; border-radius: 6px; background-color: #7c2d12; color: #fca5a5; border: 1px solid #dc2626; margin-bottom: 10px;';
+      errorMsg.textContent = data.message;
+      form.parentNode.insertBefore(errorMsg, form);
+      
+      setTimeout(() => errorMsg.remove(), 5000);
+    }
+  })
+  .catch(error => {
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Upload';
+    const errorMsg = document.createElement('div');
+    errorMsg.style.cssText = 'padding: 12px 16px; border-radius: 6px; background-color: #7c2d12; color: #fca5a5; border: 1px solid #dc2626; margin-bottom: 10px;';
+    errorMsg.textContent = 'Error uploading file: ' + error.message;
+    form.parentNode.insertBefore(errorMsg, form);
+    
+    setTimeout(() => errorMsg.remove(), 5000);
+  });
+});
+</script>

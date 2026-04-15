@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-shell appear">
+  <header class="page-header glass-panel">
+    <div class="eyebrow">Secure upload</div>
+    <h2 class="page-title">Upload File</h2>
+    <p class="page-subtitle">Layered malware, sensitive data, and size checks keep every file compliant before it ever reaches storage.</p>
+  </header>
+
+  <ul class="progress-steps">
+    <li class="step {% if not check_results %}active{% else %}completed{% endif %}">
+      <span class="step-index">1</span>
+      <span>Select file</span>
+    </li>
+    <li class="step {% if check_results and check_results.recommendation == 'WARN' and not show_confirmation %}active{% elif check_results %}completed{% endif %}">
+      <span class="step-index">2</span>
+      <span>Security review</span>
+    </li>
+    <li class="step {% if show_confirmation %}active{% elif check_results and check_results.recommendation != 'REJECT' and not show_confirmation and check_results %}completed{% endif %}">
+      <span class="step-index">3</span>
+      <span>Confirm & encrypt</span>
+    </li>
+  </ul>
+
+  {% if show_confirmation %}
+    <div class="layout-grid">
+      <div class="card-animated warning-card">
+        <div class="card-headline">Sensitive signals detected</div>
+        <p class="card-sub">Review highlights before committing the upload.</p>
+        <div class="details-grid">
+          <div class="metric-pill warning">{{ check_results.scan_results.sensitive_data.findings|length }} patterns flagged</div>
+          <div class="metric-pill neutral">{{ check_results.scan_results.file_size.size_mb }} MB</div>
+          <div class="metric-pill neutral">{{ check_results.scan_results.file_type.extension|upper }}</div>
+        </div>
+        {% if check_results.scan_results.sensitive_data.findings %}
+          <div class="list-section">
+            <div class="section-title">Sensitive data samples</div>
+            <div class="scroll-area">
+              <ul class="styled-list">
+                {% for finding in check_results.scan_results.sensitive_data.findings %}
+                  <li>
+                    <span class="list-title">{{ finding.description }}</span>
+                    <span class="list-chip">{{ finding.type }}</span>
+                    <span class="list-note">{{ finding.example }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+        {% if check_results.warnings %}
+          <div class="list-section subtle">
+            <div class="section-title">Warnings</div>
+            <ul class="styled-list compact">
+              {% for warning in check_results.warnings %}
+                <li>{{ warning }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+      <form method="post" enctype="multipart/form-data" class="card-animated confirm-card">
+        {% csrf_token %}
+        <input type="hidden" name="title" value="{{ title }}">
+        {% if pending_upload_token %}
+          <input type="hidden" name="pending_upload_token" value="{{ pending_upload_token }}">
+        {% endif %}
+        <div class="confirm-block">
+          <div class="confirm-icon">!</div>
+          <div>
+            <div class="confirm-title">Proceed with encryption?</div>
+            <p class="confirm-sub">We will encrypt the file with AES-256 and retain the sensitive data log.</p>
+          </div>
+        </div>
+        <label class="checkbox-line">
+          <input type="checkbox" name="confirm_sensitive_data" required>
+          <span>I understand the risks and still want to upload this file.</span>
+        </label>
+        <div class="action-row">
+          <button class="btn primary glow compact" type="submit">Upload anyway</button>
+          <a href="{% url 'upload_file' %}" class="btn ghost compact">Cancel</a>
+        </div>
+      </form>
+    </div>
+  {% elif check_results and check_results.recommendation == 'REJECT' %}
+    <div class="card-animated danger-card">
+      <div class="card-headline">Upload rejected</div>
+      <p class="card-sub">Resolve the issues below to continue.</p>
+      {% if check_results.errors %}
+        <ul class="styled-list compact">
+          {% for error in check_results.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      <div class="result-grid">
+        <div class="result-chip danger">File type: {{ check_results.scan_results.file_type.status }}</div>
+        <div class="result-chip neutral">Malware: {{ check_results.scan_results.malware.status }}</div>
+        <div class="result-chip neutral">Sensitive data: {{ check_results.scan_results.sensitive_data.findings_count }}</div>
+      </div>
+      <a href="{% url 'upload_file' %}" class="btn ghost">Try again</a>
+    </div>
+  {% else %}
+    <div class="layout-grid">
+      <form method="post" enctype="multipart/form-data" class="card-animated form-card modern">
+        {% csrf_token %}
+        <div class="field-group">
+          <label for="title">Title</label>
+          <div class="input-shell">
+            <input type="text" id="title" name="title" value="{{ title }}" required>
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="file">File</label>
+          <div class="input-shell file">
+            <input type="file" id="file" name="file" required>
+          </div>
+          <span class="helper">Maximum 50 MB • PDF, DOC, DOCX, XLS, XLSX, TXT, CSV, JPG, PNG, ZIP, MP3, MP4 and more.</span>
+        </div>
+        <div class="field-group">
+          <label class="checkbox-line">
+            <input type="checkbox" id="encrypt_file" name="encrypt_file" checked>
+            <span>Encrypt file before storing</span>
+          </label>
+          <span class="helper">AES-256 encryption provides additional security but may impact performance for large files.</span>
+        </div>
+        <div class="action-row">
+          <button class="btn primary glow compact" type="submit">Run security checks</button>
+          <a href="{% url 'file_list' %}" class="btn ghost compact">Cancel</a>
+        </div>
+      </form>
+      <aside class="card-animated info-card">
+        <div class="card-headline">Security pipeline</div>
+        <p class="card-sub">Each upload flows through automated guardrails with instant visual feedback.</p>
+        <div class="timeline">
+          <div class="timeline-step">
+            <div class="timeline-bullet">1</div>
+            <div>
+              <div class="timeline-title">File fingerprinting</div>
+              <p>Validate extension, calculate SHA-256, ensure size constraints.</p>
+            </div>
+          </div>
+          <div class="timeline-step">
+            <div class="timeline-bullet">2</div>
+            <div>
+              <div class="timeline-title">Threat scanning</div>
+              <p>ClamAV performs live stream scanning with fallback handling if the daemon is offline.</p>
+            </div>
+          </div>
+          <div class="timeline-step">
+            <div class="timeline-bullet">3</div>
+            <div>
+              <div class="timeline-title">Sensitive data radar</div>
+              <p>Advanced regex patterns highlight potential credentials, banking data, and more.</p>
+            </div>
+          </div>
+          <div class="timeline-step">
+            <div class="timeline-bullet">4</div>
+            <div>
+              <div class="timeline-title">AES-256 vaulting</div>
+              <p>Clean files are encrypted and stored with full audit trail entries.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+

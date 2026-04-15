@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-shell appear">
+  <header class="page-header glass-panel">
+    <div class="eyebrow">Secure file management</div>
+    <h2 class="page-title">File Vault</h2>
+    <p class="page-subtitle">Manage your encrypted files, keys, and security settings.</p>
+  </header>
+
+  {% include 'files/file_list_tab.html' %}
+</section>
+
+
+{% endblock %}

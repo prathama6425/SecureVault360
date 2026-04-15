@@ -1,0 +1,162 @@
+<h3>🔓 File Decryption</h3>
+<p class="page-subtitle" style="margin-bottom: 24px;">Decrypt your encrypted files using the decryption key.</p>
+
+<!-- Encrypted Files Overview -->
+<div class="decryption-overview" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+  <h4 style="color: #ffffff; margin-top: 0; margin-bottom: 15px;">🔐 Your Encrypted Files</h4>
+  <div style="text-align: center;">
+    <div style="font-size: 24px; font-weight: bold; color: #10b981;">{{ encrypted_files_count }}</div>
+    <div style="font-size: 12px; color: #e0e7ff;">Files Ready to Decrypt</div>
+  </div>
+</div>
+
+<!-- Info Card -->
+<div class="security-info-card" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+  <h4 style="color: #ffffff; margin-top: 0;">ℹ️ How to Decrypt</h4>
+  <ul style="margin-left: 20px; color: #e0e7ff;">
+    <li><strong style="color: #fbbf24;">View Key:</strong> Click to see the decryption key for the file</li>
+    <li><strong style="color: #fbbf24;">Decrypt:</strong> Download the encrypted file and decrypt it using the key</li>
+    <li><strong style="color: #fbbf24;">Important:</strong> Keep your decryption keys safe and secure</li>
+  </ul>
+</div>
+
+<!-- Encrypted Files Table -->
+<div style="overflow-x: auto;">
+  <table class="table" style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background: linear-gradient(180deg, #3b82f6, #2563eb); border-bottom: 2px solid #1d4ed8;">
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Title</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">File Name</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Uploaded</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for file in encrypted_files %}
+      <tr style="border-bottom: 1px solid #ffffff15; background-color: #121a2e;">
+        <td style="padding: 12px; color: #e5e7eb;">{{ file.title }}</td>
+        <td style="padding: 12px; word-break: break-word; color: #e5e7eb;">{{ file.filename }}</td>
+        <td style="padding: 12px; font-size: 13px; color: #94a3b8;">{{ file.uploaded_at|date:"M d, Y H:i" }}</td>
+        <td style="padding: 12px;">
+          <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <button class="btn-view-key" onclick="showDecryptionKey('{{ file.id }}')" style="background-color: #6c757d; color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; border: none; cursor: pointer; font-weight: 500;">🔑 View Key</button>
+            <a class="btn-decrypt" href="{% url 'download_file' file.pk %}" style="background-color: #10b981; color: white; padding: 6px 12px; text-decoration: none; border-radius: 3px; font-size: 11px; font-weight: 500;">⬇️ Download</a>
+          </div>
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8; background-color: #121a2e;">
+          <div style="font-size: 48px; margin-bottom: 10px;">🔒</div>
+          <p style="margin: 0;"><strong>No encrypted files yet</strong></p>
+          <p style="margin: 5px 0 0 0; font-size: 13px;">Go to the <strong>Encrypt File</strong> tab to encrypt your files</p>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Decryption Key Modal -->
+<div id="decryptKeyModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;">
+  <div class="modal-content" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #3b82f6; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="color: #ffffff; margin: 0; font-size: 20px;">🔑 Decryption Key</h3>
+      <button onclick="closeDecryptModal()" style="background: none; border: none; color: #94a3b8; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;">✕</button>
+    </div>
+    
+    <div id="decryptKeyContent" style="margin: 20px 0;">
+      <p style="color: #e0e7ff; margin-bottom: 15px; font-size: 14px;">Keep this key safe! You'll need it to decrypt your file:</p>
+      <div style="background: #0f172a; border: 2px solid #334155; border-radius: 6px; padding: 15px; font-family: 'Courier New', monospace; word-break: break-all; color: #60a5fa; font-size: 12px; line-height: 1.6; margin-bottom: 15px; max-height: 150px; overflow-y: auto;" id="keyDisplayArea"></div>
+    </div>
+    
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button onclick="copyDecryptionKey()" style="background-color: #10b981; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;">📋 Copy Key</button>
+      <button onclick="closeDecryptModal()" style="background-color: #6c757d; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;">Close</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal-overlay {
+  display: flex;
+}
+
+.btn-view-key:hover {
+  background-color: #5a6268 !important;
+  transform: translateY(-1px);
+}
+
+.btn-decrypt:hover {
+  background-color: #059669 !important;
+  transform: translateY(-1px);
+}
+
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.table td {
+  border-bottom: 1px solid #ffffff10;
+}
+
+table.table tbody tr:hover {
+  background-color: #1e293b !important;
+}
+</style>
+
+<script>
+function showDecryptionKey(fileId) {
+  fetch(`/files/get-key/${fileId}/`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        document.getElementById('keyDisplayArea').textContent = data.key;
+        document.getElementById('decryptKeyModal').style.display = 'flex';
+      } else {
+        alert('Error retrieving decryption key: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      alert('Error retrieving decryption key: ' + error.message);
+    });
+}
+
+function closeDecryptModal() {
+  document.getElementById('decryptKeyModal').style.display = 'none';
+}
+
+function copyDecryptionKey() {
+  const keyText = document.getElementById('keyDisplayArea').textContent;
+  navigator.clipboard.writeText(keyText).then(() => {
+    const copyBtn = event.target;
+    const originalText = copyBtn.textContent;
+    copyBtn.textContent = '✓ Copied!';
+    copyBtn.style.backgroundColor = '#10b981';
+    setTimeout(() => {
+      copyBtn.textContent = originalText;
+    }, 2000);
+  }).catch(err => {
+    alert('Failed to copy key: ' + err.message);
+  });
+}
+
+document.getElementById('decryptKeyModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeDecryptModal();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('decryptKeyModal').style.display !== 'none') {
+    closeDecryptModal();
+  }
+});
+</script>

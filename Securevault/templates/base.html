@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SecureVault 360</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body class="app-body">
+    <div class="background-orb orb-one"></div>
+    <div class="background-orb orb-two"></div>
+    <div class="background-grid"></div>
+    <nav class="nav glass-nav">
+        <div class="nav-brand">
+            <span class="brand-emblem">SV</span>
+            <div class="logo">SecureVault 360</div>
+        </div>
+        <div class="links">
+            {% if user.is_authenticated %}
+            <a href="/dashboard/">Dashboard</a>
+            <a href="/vault/">Passwords</a>
+            <a href="/files/main/">Files</a>
+            <a href="/logout/" class="danger">Logout</a>
+            {% else %}
+            <a href="/login/">Login</a>
+            <a href="/register/" class="primary">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+    <main class="container main-stage">
+        <div class="toast-stack">
+            {% for message in messages %}
+            <div class="toast {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="footer subtle-glow">Cybersecurity-first vault • MFA • Encryption • Integrity</footer>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+

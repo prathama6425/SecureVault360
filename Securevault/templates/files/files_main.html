@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-shell appear">
+  <header class="page-header glass-panel">
+    <div class="eyebrow">Secure file management</div>
+    <h2 class="page-title">File Vault</h2>
+    <p class="page-subtitle">Manage your encrypted files, keys, and security settings.</p>
+  </header>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button class="tab-button active" onclick="showTab('files')" id="files-tab">
+      <span class="tab-icon">📁</span>
+      Your Files
+    </button>
+    <button class="tab-button" onclick="showTab('encrypt')" id="encrypt-tab">
+      <span class="tab-icon">🔐</span>
+      Encrypt File
+    </button>
+    <button class="tab-button" onclick="showTab('keys')" id="keys-tab">
+      <span class="tab-icon">🔑</span>
+      Key Management
+    </button>
+    <button class="tab-button" onclick="showTab('recovery')" id="recovery-tab">
+      <span class="tab-icon">🛡️</span>
+      Recovery Keys
+    </button>
+  </div>
+
+  <!-- Tab Content -->
+  <div id="files-content" class="tab-content active">
+    {% include 'files/file_list_tab.html' %}
+  </div>
+
+  <div id="encrypt-content" class="tab-content">
+    {% include 'files/encrypt_file_tab.html' %}
+  </div>
+
+  <div id="keys-content" class="tab-content">
+    {% include 'files/key_management_tab.html' %}
+  </div>
+
+  <div id="recovery-content" class="tab-content">
+    {% include 'files/recovery_key_tab.html' %}
+  </div>
+</section>
+
+<style>
+.tab-navigation {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tab-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e7eb;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.tab-content h3 {
+  color: #e5e7eb;
+  margin-bottom: 16px;
+}
+
+.tab-content h3 {
+  color: #e5e7eb;
+  margin-bottom: 16px;
+}
+</style>
+
+<script>
+function showTab(tabName) {
+  // Hide all tab contents
+  const contents = document.querySelectorAll('.tab-content');
+  contents.forEach(content => content.classList.remove('active'));
+
+  // Remove active from all buttons
+  const buttons = document.querySelectorAll('.tab-button');
+  buttons.forEach(button => button.classList.remove('active'));
+
+  // Show selected tab
+  document.getElementById(tabName + '-content').classList.add('active');
+  document.getElementById(tabName + '-tab').classList.add('active');
+}
+</script>
+  font-size: 18px;
+  font-weight: 600;
+}
+</style>
+
+<script>
+function showTab(tabName) {
+  // Hide all tab contents
+  const contents = document.querySelectorAll('.tab-content');
+  contents.forEach(content => content.classList.remove('active'));
+
+  // Remove active class from all buttons
+  const buttons = document.querySelectorAll('.tab-button');
+  buttons.forEach(button => button.classList.remove('active'));
+
+  // Show selected tab content
+  document.getElementById(tabName + '-content').classList.add('active');
+
+  // Add active class to selected button
+  document.getElementById(tabName + '-tab').classList.add('active');
+
+  // Update URL without page reload
+  const newUrl = window.location.pathname + '?tab=' + tabName;
+  window.history.pushState({tab: tabName}, '', newUrl);
+}
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(event) {
+  if (event.state && event.state.tab) {
+    showTab(event.state.tab);
+  }
+});
+
+// Initialize with URL parameter or default to files
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tab = urlParams.get('tab') || 'files';
+  showTab(tab);
+});
+</script>
+{% endblock %}

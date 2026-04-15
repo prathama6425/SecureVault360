@@ -1,0 +1,296 @@
+<h3>Recovery Key Access</h3>
+<p class="page-subtitle" style="margin-bottom: 24px;">Access and manage recovery keys for your encrypted files in case of emergency.</p>
+
+<div class="recovery-grid">
+  <div class="card-animated warning-card">
+    <div class="card-headline">⚠️ Emergency Access</div>
+    <p class="card-sub">Recovery keys should only be used in emergency situations where normal access is not possible.</p>
+
+    <div class="warning-list">
+      <div class="warning-item">
+        <span class="warning-icon">🔴</span>
+        <span>Recovery keys bypass normal security measures</span>
+      </div>
+      <div class="warning-item">
+        <span class="warning-icon">🔴</span>
+        <span>Access is logged and may trigger security alerts</span>
+      </div>
+      <div class="warning-item">
+        <span class="warning-icon">🔴</span>
+        <span>Use only when you cannot access files through normal means</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-animated recovery-card">
+    <div class="card-headline">🔓 Recovery Options</div>
+    <p class="card-sub">Choose how you want to access your recovery keys.</p>
+
+    <div class="recovery-options">
+      <div class="recovery-option">
+        <div class="option-header">
+          <div class="option-icon">📋</div>
+          <div>
+            <h4>View Recovery Keys</h4>
+            <p>Display recovery keys for your encrypted files</p>
+          </div>
+        </div>
+        <button class="btn secondary" onclick="viewRecoveryKeys()">
+          View Keys
+        </button>
+      </div>
+
+      <div class="recovery-option">
+        <div class="option-header">
+          <div class="option-icon">💾</div>
+          <div>
+            <h4>Download Recovery Package</h4>
+            <p>Download all recovery keys as an encrypted package</p>
+          </div>
+        </div>
+        <button class="btn primary" onclick="downloadRecoveryPackage()">
+          Download Package
+        </button>
+      </div>
+
+      <div class="recovery-option">
+        <div class="option-header">
+          <div class="option-icon">🔄</div>
+          <div>
+            <h4>Emergency Decrypt</h4>
+            <p>Decrypt files using recovery keys (use with caution)</p>
+          </div>
+        </div>
+        <button class="btn warning" onclick="emergencyDecrypt()">
+          Emergency Decrypt
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recovery Keys Modal -->
+<div id="recoveryKeysModal" class="modal" style="display: none;">
+  <div class="modal-content large">
+    <div class="modal-header">
+      <h3>Recovery Keys</h3>
+      <button class="modal-close" onclick="closeRecoveryModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="recoveryKeysContent">
+      <div class="recovery-keys-list">
+        {% if encrypted_files %}
+          {% for file in encrypted_files %}
+            <div class="recovery-key-item">
+              <div class="key-details">
+                <h4>{{ file.title }}</h4>
+                <p class="filename">{{ file.filename }}</p>
+                <p class="file-info">Uploaded: {{ file.uploaded_at|date:"M d, Y H:i" }}</p>
+              </div>
+              <div class="key-display">
+                <div class="key-label">Recovery Key:</div>
+                <div class="key-value" id="key-{{ file.id }}">
+                  [Click to reveal]
+                </div>
+                <button class="btn small" onclick="revealKey('{{ file.id }}')">Reveal Key</button>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-recovery">
+            <div class="empty-icon">🔐</div>
+            <h4>No Encrypted Files</h4>
+            <p>You don't have any encrypted files that require recovery keys.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.recovery-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+}
+
+.warning-list {
+  margin-top: 16px;
+}
+
+.warning-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #fbbf24;
+  font-size: 14px;
+}
+
+.warning-icon {
+  font-size: 16px;
+}
+
+.recovery-options {
+  margin-top: 16px;
+}
+
+.recovery-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.option-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.option-icon {
+  font-size: 32px;
+}
+
+.option-header h4 {
+  margin: 0 0 4px 0;
+  color: #e5e7eb;
+}
+
+.option-header p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.btn.warning {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn.warning:hover {
+  background-color: #dc2626;
+}
+
+.modal-content.large {
+  max-width: 800px;
+}
+
+.recovery-keys-list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.recovery-key-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.key-details {
+  flex: 1;
+}
+
+.key-details h4 {
+  margin: 0 0 8px 0;
+  color: #e5e7eb;
+}
+
+.filename {
+  color: #94a3b8;
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+.file-info {
+  color: #64748b;
+  margin: 0;
+  font-size: 12px;
+}
+
+.key-display {
+  text-align: right;
+}
+
+.key-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.key-value {
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  color: #fbbf24;
+  font-size: 14px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.empty-recovery {
+  text-align: center;
+  padding: 48px 24px;
+  color: #94a3b8;
+}
+
+.empty-recovery .empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-recovery h4 {
+  color: #e5e7eb;
+  margin-bottom: 8px;
+}
+</style>
+
+<script>
+function viewRecoveryKeys() {
+  document.getElementById('recoveryKeysModal').style.display = 'flex';
+}
+
+function downloadRecoveryPackage() {
+  alert('Recovery package download functionality would be implemented here. This would create an encrypted package containing all recovery keys.');
+}
+
+function emergencyDecrypt() {
+  if (confirm('Emergency decryption will bypass normal security measures. Are you sure you want to proceed?')) {
+    alert('Emergency decryption functionality would be implemented here. This requires special authorization and logging.');
+  }
+}
+
+function revealKey(fileId) {
+  const keyElement = document.getElementById('key-' + fileId);
+  // In a real implementation, this would fetch the actual recovery key
+  keyElement.textContent = 'RECOVERY-' + fileId + '-KEY-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+  keyElement.style.background = 'rgba(251, 191, 36, 0.1)';
+}
+
+function closeRecoveryModal() {
+  document.getElementById('recoveryKeysModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('recoveryKeysModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeRecoveryModal();
+  }
+});
+</script>

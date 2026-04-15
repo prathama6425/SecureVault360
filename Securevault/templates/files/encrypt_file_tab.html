@@ -1,0 +1,198 @@
+<h3>🔐 File Encryption Management</h3>
+<p class="page-subtitle" style="margin-bottom: 24px;">View encryption status of all your files, manage decryption keys, and encrypt unencrypted files.</p>
+
+<!-- Encryption Status Overview -->
+<div class="encryption-overview" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+  <h4 style="color: #ffffff; margin-top: 0; margin-bottom: 15px;">🔒 Encryption Status</h4>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+    <div style="text-align: center;">
+      <div style="font-size: 24px; font-weight: bold; color: #60a5fa;">{{ total_files_count }}</div>
+      <div style="font-size: 12px; color: #e0e7ff;">Total Files</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 24px; font-weight: bold; color: #10b981;">{{ encrypted_files_count }}</div>
+      <div style="font-size: 12px; color: #e0e7ff;">Encrypted</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 24px; font-weight: bold; color: #f59e0b;">{{ unencrypted_files_count }}</div>
+      <div style="font-size: 12px; color: #e0e7ff;">Unencrypted</div>
+    </div>
+  </div>
+</div>
+
+<!-- Encryption Info Card -->
+<div class="security-info-card" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+  <h4 style="color: #ffffff; margin-top: 0;">🔐 What can you do here?</h4>
+  <ul style="margin-left: 20px; color: #e0e7ff;">
+    <li><strong style="color: #fbbf24;">View Encryption Status:</strong> See which files are encrypted and which aren't</li>
+    <li><strong style="color: #fbbf24;">View Decryption Keys:</strong> Access keys for encrypted files (keep them safe!)</li>
+    <li><strong style="color: #fbbf24;">Encrypt Files:</strong> Encrypt unencrypted files with AES-256</li>
+  </ul>
+</div>
+
+<!-- Files Table -->
+<div style="overflow-x: auto;">
+  <table class="table" style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background: linear-gradient(180deg, #3b82f6, #2563eb); border-bottom: 2px solid #1d4ed8;">
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Title</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">File Name</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Encryption Status</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Security Checks</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Uploaded</th>
+        <th style="padding: 12px; text-align: left; color: white; font-weight: 700;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for file in files %}
+      <tr style="border-bottom: 1px solid #ffffff15; background-color: #121a2e;">
+        <td style="padding: 12px; color: #e5e7eb;">{{ file.title }}</td>
+        <td style="padding: 12px; word-break: break-word; color: #e5e7eb;">{{ file.filename }}</td>
+        <td style="padding: 12px;">
+          {% if file.is_encrypted %}
+            <span class="badge" style="background-color: #10b981; color: white; padding: 4px 8px; border-radius: 4px; display: inline-block;">🔐 Encrypted</span>
+          {% else %}
+            <span class="badge" style="background-color: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; display: inline-block;">📄 Unencrypted</span>
+          {% endif %}
+        </td>
+        <td style="padding: 12px;">
+          <div style="font-size: 12px; line-height: 1.8;">
+            {% if file.file_type_check %}
+              <span style="display: inline-block; padding: 2px 6px; border-radius: 3px; {% if file.file_type_check == 'SAFE' %}background-color: #c8e6c9; color: #2e7d32;{% elif file.file_type_check == 'UNSAFE' %}background-color: #ffcdd2; color: #c62828;{% else %}background-color: #f5f5f5; color: #666;{% endif %}">
+                File: {{ file.get_file_type_check_display }}
+              </span>
+            {% endif %}
+            {% if file.malware_check %}
+              <span style="display: inline-block; padding: 2px 6px; border-radius: 3px; margin-left: 5px; {% if file.malware_check == 'CLEAN' %}background-color: #c8e6c9; color: #2e7d32;{% elif file.malware_check == 'INFECTED' %}background-color: #ffcdd2; color: #c62828;{% else %}background-color: #f5f5f5; color: #666;{% endif %}">
+                Scan: {{ file.get_malware_check_display }}
+              </span>
+            {% endif %}
+            {% if file.sensitive_data_found %}
+              <span style="display: inline-block; padding: 2px 6px; border-radius: 3px; margin-left: 5px; background-color: #ffe0b2; color: #e65100;">
+                Data: Found ({{ file.sensitive_data_details|length }})
+              </span>
+            {% endif %}
+          </div>
+        </td>
+        <td style="padding: 12px; font-size: 13px; color: #94a3b8;">{{ file.uploaded_at|date:"M d, Y H:i" }}</td>
+        <td style="padding: 12px;">
+          {% if file.is_encrypted %}
+            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+              <button class="btn secondary-small" onclick="showDecryptionKey('{{ file.id }}')" style="background-color: #6c757d; color: white; padding: 4px 8px; border-radius: 3px; font-size: 11px; border: none; cursor: pointer;">View Key</button>
+              <a class="btn secondary-small" href="{% url 'download_file' file.pk %}" style="background-color: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Download</a>
+            </div>
+          {% else %}
+            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+              <form method="post" action="{% url 'encrypt_file_action' file.pk %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn secondary-small" style="background-color: #fbbf24; color: #000; padding: 4px 8px; border-radius: 3px; font-size: 11px; border: none; cursor: pointer; font-weight: 600;">🔒 Encrypt</button>
+              </form>
+              <a class="btn secondary-small" href="{% url 'download_file' file.pk %}" style="background-color: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Download</a>
+            </div>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="6" style="padding: 20px; text-align: center; color: #94a3b8; background-color: #121a2e;">
+          <p>No files yet. <a href="#" onclick="showTab('files'); return false;" style="color: #60a5fa; font-weight: 600;">Upload your first file</a></p>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Decryption Key Modal -->
+<div id="keyModalEncrypt" class="modal-overlay-encrypt" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;">
+  <div class="modal-content-encrypt" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #3b82f6; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="color: #ffffff; margin: 0; font-size: 20px;">🔑 Decryption Key</h3>
+      <button onclick="closeKeyModal()" style="background: none; border: none; color: #94a3b8; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s;">✕</button>
+    </div>
+    
+    <div id="keyContent" style="margin: 20px 0;">
+      <p style="color: #e0e7ff; margin-bottom: 15px; font-size: 14px;">Keep this key safe! You'll need it to decrypt your file:</p>
+      <div style="background: #0f172a; border: 2px solid #334155; border-radius: 6px; padding: 15px; font-family: 'Courier New', monospace; word-break: break-all; color: #60a5fa; font-size: 12px; line-height: 1.6; margin-bottom: 15px; max-height: 150px; overflow-y: auto;" id="keyDisplayText"></div>
+    </div>
+    
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button onclick="copyKeyEncrypt()" style="background-color: #10b981; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;">📋 Copy Key</button>
+      <button onclick="closeKeyModal()" style="background-color: #6c757d; color: white; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;">Close</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal-overlay-encrypt {
+  display: flex !important;
+}
+
+.modal-overlay-encrypt[style*="display: none"] {
+  display: none !important;
+}
+</style>
+
+<script>
+function showDecryptionKey(fileId) {
+  fetch(`/files/get-key/${fileId}/`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        document.getElementById('keyDisplayText').textContent = data.key;
+        document.getElementById('keyModalEncrypt').style.display = 'flex';
+      } else {
+        alert('Error retrieving decryption key: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      alert('Error retrieving decryption key: ' + error.message);
+    });
+}
+
+function closeKeyModal() {
+  document.getElementById('keyModalEncrypt').style.display = 'none';
+}
+
+function copyKeyEncrypt() {
+  const keyText = document.getElementById('keyDisplayText').textContent;
+  navigator.clipboard.writeText(keyText).then(() => {
+    const copyBtn = event.target;
+    const originalText = copyBtn.textContent;
+    copyBtn.textContent = '✓ Copied!';
+    copyBtn.style.backgroundColor = '#10b981';
+    setTimeout(() => {
+      copyBtn.textContent = originalText;
+      copyBtn.style.backgroundColor = '#10b981';
+    }, 2000);
+  }).catch(err => {
+    alert('Failed to copy key: ' + err.message);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('keyModalEncrypt');
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeKeyModal();
+      }
+    });
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('keyModalEncrypt');
+    if (modal && modal.style.display !== 'none') {
+      closeKeyModal();
+    }
+  }
+});
+</script>
