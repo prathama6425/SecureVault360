@@ -7,6 +7,8 @@ alwaysApply: true
 
 ## Summary
 A comprehensive Django-based secure file vault application that implements multi-layer security for file uploads including type validation, malware scanning with ClamAV, sensitive data detection, and complete audit logging.
+It is a web-based secure data management system designed to protect user files and sensitive information.
+It uses Multi-Factor Authentication (MFA) and AES-based encryption, and file scanning to ensure safe authentication and protected file storage.
 
 ## Structure
 The project is organized into several Django apps and supporting directories:
